@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/courses")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class CourseController {
 
     private final CourseService courseService;
@@ -47,6 +46,7 @@ public class CourseController {
      * Creates a new course with pricing plans atomically.
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<CourseResponseDTO>> createCourse(
             @Valid @RequestBody CreateCourseRequest dto) {
         CourseResponseDTO data = courseService.createCourse(dto);
@@ -60,6 +60,7 @@ public class CourseController {
      * Updates course fields and replaces pricing plans if provided.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<CourseResponseDTO>> updateCourse(
             @PathVariable Long id,
             @Valid @RequestBody UpdateCourseRequest dto) {
@@ -72,6 +73,7 @@ public class CourseController {
      * Soft-deletes if enrolled students/lectures exist; hard-deletes otherwise.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCourse(@PathVariable Long id) {
         courseService.deleteCourse(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Course deleted successfully.", null));

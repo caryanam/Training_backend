@@ -31,6 +31,8 @@ public class CreateCourseRequest {
     @NotBlank(message = "Description is required")
     private String description;
 
+    private String facultyId;
+
     @Builder.Default
     private CourseStatus status = CourseStatus.ACTIVE;
 

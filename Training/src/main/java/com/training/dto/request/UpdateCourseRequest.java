@@ -28,6 +28,8 @@ public class UpdateCourseRequest {
 
     private String description;
 
+    private String facultyId;
+
     @Valid
     private List<CoursePlanUpdateRequest> plans;
 

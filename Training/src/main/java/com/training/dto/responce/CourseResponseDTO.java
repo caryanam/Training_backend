@@ -23,5 +23,9 @@ public class CourseResponseDTO {
     private CourseStatus status;
     private int lectureCount;
     private int activeStudentCount;
+    private String facultyId;
+    private String facultyName;
+    private String facultyEmail;
+    private String facultyPhone;
     private List<CoursePlanResponseDTO> plans;
 }

@@ -15,6 +15,7 @@ import com.training.exception.ResourceNotFoundException;
 import com.training.repo.CoursePlanRepository;
 import com.training.repo.CourseRepository;
 import com.training.repo.EnrollmentRepository;
+import com.training.repo.FacultyRepository;
 import com.training.repo.LectureRepository;
 import com.training.service.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class CourseServiceImpl implements CourseService {
     private final CoursePlanRepository coursePlanRepository;
     private final LectureRepository lectureRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final FacultyRepository facultyRepository;
 
     // ─────────────────────────────────────────────────────────────────────────
     // GET ALL
@@ -79,11 +81,13 @@ public class CourseServiceImpl implements CourseService {
                 .collect(Collectors.toList()));
 
         // 3. Build and save Course
+        com.training.entity.Faculty faculty = findFacultyByIdOrCode(dto.getFacultyId());
         Course course = Course.builder()
                 .name(dto.getTitle())
                 .description(dto.getDescription())
                 .category(dto.getCategory())
                 .status(dto.getStatus() != null ? dto.getStatus() : CourseStatus.ACTIVE)
+                .faculty(faculty)
                 .plans(new ArrayList<>())
                 .curriculum(new ArrayList<>())
                 .build();
@@ -135,6 +139,10 @@ public class CourseServiceImpl implements CourseService {
         }
         if (dto.getStatus() != null) {
             course.setStatus(dto.getStatus());
+        }
+        if (dto.getFacultyId() != null && !dto.getFacultyId().trim().isEmpty()) {
+            com.training.entity.Faculty faculty = findFacultyByIdOrCode(dto.getFacultyId());
+            course.setFaculty(faculty);
         }
 
         course = courseRepository.save(course);
@@ -205,6 +213,12 @@ public class CourseServiceImpl implements CourseService {
                         .build())
                 .collect(Collectors.toList());
 
+        com.training.entity.Faculty faculty = course.getFaculty();
+        String facId = faculty != null ? (faculty.getFacultyCode() != null ? faculty.getFacultyCode() : "FAC-" + faculty.getId()) : "FAC-2001";
+        String facName = faculty != null && faculty.getUser() != null ? faculty.getUser().getFullName() : "Dr. Rajesh Sharma";
+        String facEmail = faculty != null && faculty.getUser() != null ? faculty.getUser().getEmail() : "faculty@codex.com";
+        String facPhone = faculty != null && faculty.getUser() != null ? faculty.getUser().getPhone() : "9876543210";
+
         return CourseResponseDTO.builder()
                 .id(course.getId())
                 .courseCode(course.getCourseCode())
@@ -214,6 +228,10 @@ public class CourseServiceImpl implements CourseService {
                 .status(course.getStatus())
                 .lectureCount((int) lectureCount)
                 .activeStudentCount((int) activeStudents)
+                .facultyId(facId)
+                .facultyName(facName)
+                .facultyEmail(facEmail)
+                .facultyPhone(facPhone)
                 .plans(planDTOs)
                 .build();
     }
@@ -221,6 +239,23 @@ public class CourseServiceImpl implements CourseService {
     // ─────────────────────────────────────────────────────────────────────────
     // HELPER: Enum → Human-readable label
     // ─────────────────────────────────────────────────────────────────────────
+        private com.training.entity.Faculty findFacultyByIdOrCode(String key) {
+        if (key == null || key.trim().isEmpty()) return null;
+        String cleanKey = key.trim();
+        java.util.Optional<com.training.entity.Faculty> byCode = facultyRepository.findByFacultyCode(cleanKey);
+        if (byCode.isPresent()) return byCode.get();
+
+        java.util.Optional<com.training.entity.Faculty> byEmail = facultyRepository.findByUserEmail(cleanKey);
+        if (byEmail.isPresent()) return byEmail.get();
+
+        try {
+            Long id = Long.parseLong(cleanKey.replace("FAC-", "").replace("fac-prof-", ""));
+            return facultyRepository.findById(id).orElse(null);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private String toDurationLabel(PlanDuration duration) {
         if (duration == null) return "";
         return switch (duration) {
@@ -243,3 +278,5 @@ public class CourseServiceImpl implements CourseService {
         }
     }
 }
+
+
