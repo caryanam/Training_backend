@@ -70,6 +70,13 @@ public class CourseServiceImpl implements CourseService {
     @CacheEvict(value = "courses", allEntries = true)
     public CourseResponseDTO createCourse(CreateCourseRequest dto) {
 
+        if (dto.getTitle() == null || dto.getTitle().trim().length() < 3) {
+            throw new BadRequestException("Course title must be at least 3 characters");
+        }
+        if (dto.getDescription() == null || dto.getDescription().trim().length() < 10) {
+            throw new BadRequestException("Description must be at least 10 characters");
+        }
+
         // 1. Duplicate title check
         if (courseRepository.existsByName(dto.getTitle())) {
             throw new DuplicateResourceException("A course with this title already exists: " + dto.getTitle());
@@ -278,5 +285,6 @@ public class CourseServiceImpl implements CourseService {
         }
     }
 }
+
 
 

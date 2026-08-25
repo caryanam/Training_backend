@@ -59,6 +59,15 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     @CacheEvict(value = "dashboardStats", allEntries = true)
     public FacultyResponseDTO createFaculty(CreateFacultyDTO dto) {
+        if (dto.getFullName() == null || dto.getFullName().trim().length() < 2) {
+            throw new BadRequestException("Full name must be at least 2 characters");
+        }
+        if (dto.getDepartment() == null || dto.getDepartment().trim().length() < 2) {
+            throw new BadRequestException("Department must be at least 2 characters");
+        }
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty() && dto.getPassword().trim().length() < 8) {
+            throw new BadRequestException("Password must be at least 8 characters");
+        }
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new ResourceAlreadyExistsException("Email already exists: " + dto.getEmail());
         }
@@ -276,3 +285,4 @@ public class AdminServiceImpl implements AdminService {
                 .build();
     }
 }
+

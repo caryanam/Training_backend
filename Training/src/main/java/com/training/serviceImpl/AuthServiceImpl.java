@@ -41,6 +41,16 @@ public class AuthServiceImpl implements AuthService {
             throw new ResourceAlreadyExistsException("Email already exists: " + dto.getEmail());
         }
 
+        // Validate Full Name length (min 2 chars)
+        if (dto.getFullName() == null || dto.getFullName().trim().length() < 2) {
+            throw new BadRequestException("Full name must be at least 2 characters");
+        }
+
+        // Validate Password length (min 8 chars)
+        if (dto.getPassword() == null || dto.getPassword().length() < 8) {
+            throw new BadRequestException("Password must be at least 8 characters");
+        }
+
         // Validate phone number
         String phoneVal = dto.getPhone();
         if (phoneVal == null || phoneVal.trim().isEmpty()) {
@@ -57,10 +67,17 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Phone number must contain a valid Indian 10-digit mobile number");
         }
 
+        String courseVal = (dto.getInterestedCourse() != null && !dto.getInterestedCourse().trim().isEmpty())
+                ? dto.getInterestedCourse().trim() : null;
+        String eduVal = (dto.getEducation() != null && !dto.getEducation().trim().isEmpty())
+                ? dto.getEducation().trim() : null;
+        String cityVal = (dto.getCity() != null && !dto.getCity().trim().isEmpty())
+                ? dto.getCity().trim() : null;
+
         // 1. Create User
         User user = User.builder()
-                .fullName(dto.getFullName())
-                .email(dto.getEmail())
+                .fullName(dto.getFullName().trim())
+                .email(dto.getEmail().trim())
                 .phone(cleanPhone)
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.STUDENT)
@@ -73,9 +90,9 @@ public class AuthServiceImpl implements AuthService {
         Student student = Student.builder()
                 .user(user)
                 .studentCode(studentCode)
-                .interestedCourse(dto.getInterestedCourse())
-                .education(dto.getEducation())
-                .city(dto.getCity())
+                .interestedCourse(courseVal)
+                .education(eduVal)
+                .city(cityVal)
                 .build();
         student = studentRepository.save(student);
 
@@ -84,12 +101,12 @@ public class AuthServiceImpl implements AuthService {
         StudentLead lead = StudentLead.builder()
                 .leadCode(leadCode)
                 .student(student)
-                .fullName(dto.getFullName())
-                .email(dto.getEmail())
+                .fullName(dto.getFullName().trim())
+                .email(dto.getEmail().trim())
                 .phone(cleanPhone)
-                .interestedCourse(dto.getInterestedCourse())
-                .education(dto.getEducation())
-                .city(dto.getCity())
+                .interestedCourse(courseVal)
+                .education(eduVal)
+                .city(cityVal)
                 .status(LeadStatus.NEW)
                 .build();
         lead = studentLeadRepository.save(lead);

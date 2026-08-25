@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/admin/courses")
+@RequestMapping({"/api/v1/admin/courses", "/api/v1/courses"})
 @RequiredArgsConstructor
 public class CourseController {
 
@@ -79,3 +79,4 @@ public class CourseController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Course deleted successfully.", null));
     }
 }
+
