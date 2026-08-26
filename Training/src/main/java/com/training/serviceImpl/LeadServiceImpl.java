@@ -30,11 +30,7 @@ public class LeadServiceImpl implements LeadService {
     public List<LeadResponseDTO> getLeads(String statusStr, String search, String executorId, String executorEmail) {
         LeadStatus status = null;
         if (statusStr != null && !statusStr.trim().isEmpty() && !statusStr.equalsIgnoreCase("all")) {
-            try {
-                status = LeadStatus.valueOf(statusStr.trim().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // Ignore invalid status enum
-            }
+            status = LeadStatus.fromString(statusStr);
         }
 
         String searchFilter = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
@@ -81,7 +77,7 @@ public class LeadServiceImpl implements LeadService {
                     ? lead.getAssignedExecutor().getUser().getEmail() : null;
 
             return LeadResponseDTO.builder()
-                .id(lead.getId())
+                    .id(lead.getId())
                     .leadId(lead.getLeadCode() != null ? lead.getLeadCode() : "lead-" + lead.getId())
                     .studentId(studentCode)
                     .profileId(profileId)
@@ -91,7 +87,7 @@ public class LeadServiceImpl implements LeadService {
                     .interestedCourse(lead.getInterestedCourse())
                     .education(lead.getEducation())
                     .city(lead.getCity())
-                    .status(lead.getStatus().name())
+                    .status(lead.getStatus() != null ? lead.getStatus().getValue() : LeadStatus.NEW.getValue())
                     .assignedExecutor(executorName)
                     .assignedExecutorId(assignedExeCode)
                     .assignedExecutorEmail(assignedExeEmail)
@@ -121,7 +117,7 @@ public class LeadServiceImpl implements LeadService {
 
         return LeadAssignResponseDTO.builder()
                 .leadId(lead.getLeadCode() != null ? lead.getLeadCode() : "lead-" + lead.getId())
-                .status(lead.getStatus().name())
+                .status(lead.getStatus().getValue())
                 .executorId(executorId)
                 .executorName(executorName)
                 .build();
@@ -158,12 +154,8 @@ public class LeadServiceImpl implements LeadService {
         StudentLead lead = findLeadByIdOrCode(leadIdStr)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found: " + leadIdStr));
 
-        if (statusStr != null) {
-            try {
-                lead.setStatus(LeadStatus.valueOf(statusStr.trim().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                // Ignore invalid enum
-            }
+        if (statusStr != null && !statusStr.trim().isEmpty()) {
+            lead.setStatus(LeadStatus.fromString(statusStr));
         }
         lead = studentLeadRepository.save(lead);
 
@@ -188,7 +180,7 @@ public class LeadServiceImpl implements LeadService {
                 .interestedCourse(lead.getInterestedCourse())
                 .education(lead.getEducation())
                 .city(lead.getCity())
-                .status(lead.getStatus().name())
+                .status(lead.getStatus() != null ? lead.getStatus().getValue() : LeadStatus.NEW.getValue())
                 .assignedExecutor(executorName)
                 .assignedExecutorId(assignedExeCode)
                 .assignedExecutorEmail(assignedExeEmail)
@@ -198,4 +190,3 @@ public class LeadServiceImpl implements LeadService {
                 .build();
     }
 }
-
