@@ -20,10 +20,10 @@ public class DefaultAdminInitializer implements CommandLineRunner {
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @org.springframework.beans.factory.annotation.Value("${app.admin.email:admin@codextechnology.com}")
+    @org.springframework.beans.factory.annotation.Value("${app.admin.email:admin@gmail.com}")
     private String adminEmail;
 
-    @org.springframework.beans.factory.annotation.Value("${app.admin.password:ChangeMe@123}")
+    @org.springframework.beans.factory.annotation.Value("${app.admin.password:admin@123}")
     private String adminPassword;
 
     @Override

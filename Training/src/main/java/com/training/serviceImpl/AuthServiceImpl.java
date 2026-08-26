@@ -131,9 +131,6 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password")));
 
         boolean matches = passwordEncoder.matches(dto.getPassword(), user.getPassword());
-        if (!matches && (dto.getPassword().equalsIgnoreCase("admin@123") || dto.getPassword().equalsIgnoreCase("Admin@123"))) {
-            matches = true;
-        }
 
         if (!matches) {
             throw new InvalidCredentialsException("Invalid email or password");
