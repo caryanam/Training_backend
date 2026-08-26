@@ -81,6 +81,7 @@ public class LeadServiceImpl implements LeadService {
                     ? lead.getAssignedExecutor().getUser().getEmail() : null;
 
             return LeadResponseDTO.builder()
+                .id(lead.getId())
                     .leadId(lead.getLeadCode() != null ? lead.getLeadCode() : "lead-" + lead.getId())
                     .studentId(studentCode)
                     .profileId(profileId)
@@ -177,6 +178,7 @@ public class LeadServiceImpl implements LeadService {
                 ? lead.getAssignedExecutor().getUser().getEmail() : null;
 
         return LeadResponseDTO.builder()
+                .id(lead.getId())
                 .leadId(lead.getLeadCode() != null ? lead.getLeadCode() : "lead-" + lead.getId())
                 .studentId(studentCode)
                 .profileId(profileId)
@@ -196,3 +198,4 @@ public class LeadServiceImpl implements LeadService {
                 .build();
     }
 }
+

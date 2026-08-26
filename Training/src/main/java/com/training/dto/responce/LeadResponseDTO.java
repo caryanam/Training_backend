@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class LeadResponseDTO {
+    private Long id;
     private String leadId;
     private String studentId;
     private String profileId;
@@ -30,3 +31,4 @@ public class LeadResponseDTO {
     private LocalDateTime lastActivity;
     private LocalDateTime createdAt;
 }
+
