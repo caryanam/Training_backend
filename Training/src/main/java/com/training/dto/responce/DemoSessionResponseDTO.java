@@ -21,6 +21,9 @@ public class DemoSessionResponseDTO {
     private String demoCode;
     private String courseId;
     private String courseName;
+    private String executorId;
+    private String executorName;
+    private String executorEmail;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate demoDate;

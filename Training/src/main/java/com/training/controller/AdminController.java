@@ -12,6 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.time.LocalDate;
+import com.training.service.DemoService;
+import com.training.dto.responce.DemoSessionResponseDTO;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -19,6 +23,7 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final DemoService demoService;
 
     @PostMapping("/faculty")
     public ResponseEntity<ApiResponse<FacultyResponseDTO>> createFaculty(
@@ -85,5 +90,13 @@ public class AdminController {
     public ResponseEntity<ApiResponse<com.training.dto.responce.AdminDashboardStatsDTO>> getDashboardStats() {
         com.training.dto.responce.AdminDashboardStatsDTO data = adminService.getDashboardStats();
         return ResponseEntity.ok(new ApiResponse<>(true, "Dashboard stats fetched successfully.", data));
+    }
+
+    @GetMapping("/demo-sessions")
+    public ResponseEntity<ApiResponse<List<DemoSessionResponseDTO>>> getAllGroupDemosAdmin(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<DemoSessionResponseDTO> data = demoService.getAllGroupDemosForAdmin(status, date);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Demo sessions fetched successfully.", data));
     }
 }
