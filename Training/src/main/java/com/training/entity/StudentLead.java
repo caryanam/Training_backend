@@ -42,7 +42,6 @@ public class StudentLead {
 
     private String city;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private LeadStatus status = LeadStatus.NEW;

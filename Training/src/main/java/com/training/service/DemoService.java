@@ -22,6 +22,8 @@ public interface DemoService {
     DemoSessionResponseDTO removeParticipant(String sessionId, String studentId);
     DemoSessionResponseDTO editGroupDemo(String sessionId, CreateGroupDemoDTO dto);
     DemoSessionResponseDTO cancelGroupDemo(String sessionId);
+    List<DemoSessionResponseDTO> getAllGroupDemosForAdmin(String status, LocalDate date);
+    DemoSessionResponseDTO updateGroupDemoStatus(String sessionId, String status);
 
     // Backwards Compatibility APIs
     DemoResponseDTO scheduleDemo(ScheduleDemoDTO dto);

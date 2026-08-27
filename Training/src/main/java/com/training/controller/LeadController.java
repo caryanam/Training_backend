@@ -45,6 +45,7 @@ public class LeadController {
         ));
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_EXECUTOR')")
     @PutMapping("/{leadId}/status")
     public ResponseEntity<ApiResponse<LeadResponseDTO>> updateLeadStatus(
             @PathVariable String leadId,

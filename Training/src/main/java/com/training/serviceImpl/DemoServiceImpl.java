@@ -21,6 +21,8 @@ import com.training.repo.CourseRepository;
 import com.training.repo.DemoParticipantRepository;
 import com.training.repo.DemoSessionRepository;
 import com.training.repo.StudentLeadRepository;
+import com.training.repo.UserRepository;
+import com.training.entity.User;
 import com.training.service.DemoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class DemoServiceImpl implements DemoService {
     private final DemoParticipantRepository demoParticipantRepository;
     private final StudentLeadRepository studentLeadRepository;
     private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -272,6 +275,41 @@ public class DemoServiceImpl implements DemoService {
         return mapToSessionDTO(session);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<DemoSessionResponseDTO> getAllGroupDemosForAdmin(String statusStr, LocalDate date) {
+        DemoStatus status = null;
+        if (statusStr != null && !statusStr.trim().isEmpty() && !statusStr.equalsIgnoreCase("all")) {
+            try {
+                status = DemoStatus.valueOf(statusStr.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Ignore invalid enum
+            }
+        }
+        
+        List<DemoSession> sessions = demoSessionRepository.findSessionsWithFilters(status, date);
+        return sessions.stream().map(this::mapToSessionDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public DemoSessionResponseDTO updateGroupDemoStatus(String sessionIdStr, String statusStr) {
+        DemoSession session = findSessionByIdOrCode(sessionIdStr)
+                .orElseThrow(() -> new ResourceNotFoundException("Demo session not found: " + sessionIdStr));
+        
+        if (statusStr != null && !statusStr.trim().isEmpty()) {
+            try {
+                DemoStatus status = DemoStatus.valueOf(statusStr.trim().toUpperCase());
+                session.setStatus(status);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid demo status: " + statusStr);
+            }
+        }
+        
+        session = demoSessionRepository.save(session);
+        return mapToSessionDTO(session);
+    }
+
     // --- Backwards Compatibility Implementation ---
     @Override
     @Transactional
@@ -360,6 +398,21 @@ public class DemoServiceImpl implements DemoService {
         String sessionCode = session.getDemoCode() != null ? session.getDemoCode() : "demo-" + session.getId();
         String courseIdStr = session.getCourse() != null ? String.valueOf(session.getCourse().getId()) : null;
 
+        String executorId = "";
+        String executorName = "";
+        String executorEmail = "";
+        if (session.getCreatedBy() != null) {
+            Optional<User> userOpt = userRepository.findByEmail(session.getCreatedBy());
+            if (userOpt.isPresent()) {
+                executorId = String.valueOf(userOpt.get().getId());
+                executorName = userOpt.get().getFullName();
+                executorEmail = userOpt.get().getEmail();
+            } else {
+                executorName = session.getCreatedBy();
+                executorEmail = session.getCreatedBy();
+            }
+        }
+
         List<DemoSessionResponseDTO.ParticipantDTO> participantDTOs = new ArrayList<>();
         if (session.getParticipants() != null) {
             for (DemoParticipant p : session.getParticipants()) {
@@ -388,6 +441,9 @@ public class DemoServiceImpl implements DemoService {
                 .demoCode(sessionCode)
                 .courseId(courseIdStr)
                 .courseName(session.getCourseName() != null ? session.getCourseName() : "Full Stack Web Development")
+                .executorId(executorId)
+                .executorName(executorName)
+                .executorEmail(executorEmail)
                 .demoDate(session.getDemoDate())
                 .startTime(session.getStartTime() != null ? session.getStartTime() : session.getDemoTime())
                 .endTime(session.getEndTime())

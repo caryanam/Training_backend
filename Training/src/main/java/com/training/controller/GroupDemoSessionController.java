@@ -123,4 +123,16 @@ public class GroupDemoSessionController {
                 data
         ));
     }
+
+    @PutMapping("/{sessionId}/status")
+    public ResponseEntity<ApiResponse<DemoSessionResponseDTO>> updateGroupDemoStatus(
+            @PathVariable String sessionId,
+            @RequestParam String status) {
+        DemoSessionResponseDTO data = demoService.updateGroupDemoStatus(sessionId, status);
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "Group demo session status updated.",
+                data
+        ));
+    }
 }
