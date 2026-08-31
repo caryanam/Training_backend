@@ -13,6 +13,8 @@ import java.util.Optional;
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     Optional<Enrollment> findByEnrollmentCode(String enrollmentCode);
+    List<Enrollment> findByStudent(User student);
+    List<Enrollment> findByStudentOrderByExpiryDateDesc(User student);
     List<Enrollment> findByStudentAndCourse(User student, Course course);
     Optional<Enrollment> findFirstByStudentAndCourseAndStatusOrderByExpiryDateDesc(User student, Course course, EnrollmentStatus status);
     long countByCourseAndStatus(Course course, EnrollmentStatus status);

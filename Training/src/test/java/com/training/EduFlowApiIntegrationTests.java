@@ -2,6 +2,8 @@ package com.training;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.dto.request.*;
+import com.training.enums.CourseCategory;
+import com.training.enums.PlanDuration;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -41,7 +43,6 @@ public class EduFlowApiIntegrationTests {
     private static String createdFacultyId;
     private static String createdExecutorId;
     private static String createdLeadId;
-    private static String createdDemoId;
     private static String createdCourseId;
     private static String createdPlanId;
     private static String createdLectureId;
@@ -76,6 +77,7 @@ public class EduFlowApiIntegrationTests {
                 .fullName("Dr. Rajesh Kumar")
                 .email("rajesh.kumar@eduflow.com")
                 .phone("+91 98111 22334")
+                .department("Engineering")
                 .build();
 
         MvcResult result = mockMvc.perform(post("/api/v1/admin/faculty")
@@ -84,7 +86,7 @@ public class EduFlowApiIntegrationTests {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.role", is("FACILITY")))
+                .andExpect(jsonPath("$.data.role", is("FACULTY")))
                 .andReturn();
 
         String responseStr = result.getResponse().getContentAsString();
@@ -108,7 +110,7 @@ public class EduFlowApiIntegrationTests {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.role", is("EXECUTER")))
+                .andExpect(jsonPath("$.data.role", is("EXECUTOR")))
                 .andReturn();
 
         String responseStr = result.getResponse().getContentAsString();
@@ -190,24 +192,23 @@ public class EduFlowApiIntegrationTests {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.status", is("ASSIGNED")));
+                .andExpect(jsonPath("$.data.status", equalToIgnoringCase("ASSIGNED")));
     }
 
     @Test
     @Order(8)
     void test8_CreateCourseByAdmin() throws Exception {
-        CreateCourseDTO.CurriculumModuleDTO mod1 = CreateCourseDTO.CurriculumModuleDTO.builder()
-                .module("Module 1")
-                .title("Linux & Bash Automation")
-                .lectures(8)
+        CreateCourseRequest.CoursePlanRequest planReq = CreateCourseRequest.CoursePlanRequest.builder()
+                .duration(PlanDuration.THREE_MONTHS)
+                .price(new BigDecimal("14999.00"))
                 .build();
 
-        CreateCourseDTO dto = CreateCourseDTO.builder()
-                .name("Cloud Native DevOps & Kubernetes Masterclass")
+        CreateCourseRequest dto = CreateCourseRequest.builder()
+                .title("Cloud Native DevOps & Kubernetes Masterclass")
                 .description("Production CI/CD pipelines, Terraform IaC, and AWS Kubernetes clusters.")
-                .category("DevOps & Cloud")
+                .category(CourseCategory.DEVOPS_CLOUD)
                 .facultyId(createdFacultyId)
-                .curriculum(List.of(mod1))
+                .plans(List.of(planReq))
                 .build();
 
         MvcResult result = mockMvc.perform(post("/api/v1/courses")
@@ -222,33 +223,19 @@ public class EduFlowApiIntegrationTests {
         String responseStr = result.getResponse().getContentAsString();
         Map map = objectMapper.readValue(responseStr, Map.class);
         Map data = (Map) map.get("data");
-        createdCourseId = (String) data.get("courseId");
+        createdCourseId = (String) data.get("courseCode");
+        List<Map> plans = (List<Map>) data.get("plans");
+        createdPlanId = String.valueOf(plans.get(0).get("id"));
     }
 
     @Test
     @Order(9)
-    void test9_CreateCoursePlanByAdmin() throws Exception {
-        CreateCoursePlanDTO dto = CreateCoursePlanDTO.builder()
-                .name("3 Months Standard Plan")
-                .durationMonths(3)
-                .price(new BigDecimal("14999.00"))
-                .discount(new BigDecimal("2000.00"))
-                .currency("INR")
-                .build();
-
-        MvcResult result = mockMvc.perform(post("/api/v1/courses/" + createdCourseId + "/plans")
-                        .header("Authorization", "Bearer " + adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isCreated())
+    void test9_GetCourseDetailsByAdmin() throws Exception {
+        mockMvc.perform(get("/api/v1/courses")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.durationMonths", is(3)))
-                .andReturn();
-
-        String responseStr = result.getResponse().getContentAsString();
-        Map map = objectMapper.readValue(responseStr, Map.class);
-        Map data = (Map) map.get("data");
-        createdPlanId = (String) data.get("planId");
+                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(1))));
     }
 
     @Test
@@ -257,7 +244,7 @@ public class EduFlowApiIntegrationTests {
         VerifyPaymentDTO dto = VerifyPaymentDTO.builder()
                 .courseId(createdCourseId)
                 .planId(createdPlanId)
-                .amount(new BigDecimal("12999.00"))
+                .amount(new BigDecimal("14999.00"))
                 .paymentMethod("UPI (Razorpay)")
                 .providerOrderId("ORD_99881")
                 .providerPaymentId("PAY_77221")

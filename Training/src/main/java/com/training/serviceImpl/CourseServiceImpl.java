@@ -269,6 +269,8 @@ public class CourseServiceImpl implements CourseService {
             case ONE_MONTH -> "1 Month";
             case TWO_MONTHS -> "2 Months";
             case THREE_MONTHS -> "3 Months";
+            case SIX_MONTHS -> "6 Months";
+            case TWELVE_MONTHS -> "12 Months";
         };
     }
 

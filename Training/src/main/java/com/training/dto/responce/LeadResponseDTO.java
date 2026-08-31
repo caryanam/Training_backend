@@ -30,5 +30,10 @@ public class LeadResponseDTO {
     private LocalDate followupDate;
     private LocalDateTime lastActivity;
     private LocalDateTime createdAt;
+    private String enrollmentStatus;
+    private String enrollmentId;
+    private LocalDate startDate;
+    private LocalDate expiryDate;
+    private String courseValidity;
 }
 
