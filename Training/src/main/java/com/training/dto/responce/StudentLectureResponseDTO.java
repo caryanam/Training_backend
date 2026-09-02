@@ -30,6 +30,7 @@ public class StudentLectureResponseDTO {
     private LocalTime endTime;
 
     private String lectureUrl;
+    private String meetingLink;
     private String recordingUrl;
     private Boolean isDownloadable;
     private Long courseId;

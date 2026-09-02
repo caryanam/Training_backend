@@ -105,6 +105,7 @@ public class LectureServiceImpl implements LectureService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public LectureAccessResponseDTO getLectureAccess(String lectureIdStr, String userEmail) {
         Lecture lecture = findLectureByIdOrCode(lectureIdStr)
                 .orElseThrow(() -> new ResourceNotFoundException("Lecture not found: " + lectureIdStr));
@@ -119,12 +120,7 @@ public class LectureServiceImpl implements LectureService {
 
         // ADMIN and FACULTY have full access
         if (user.getRole() == Role.ADMIN || user.getRole() == Role.FACULTY) {
-            return LectureAccessResponseDTO.builder()
-                    .hasAccess(true)
-                    .reason("Access granted")
-                    .lectureUrl(lecture.getLectureUrl())
-                    .recordingUrl(lecture.getRecordingUrl())
-                    .build();
+            return buildLectureAccessResponse(true, "Access granted", lecture, course);
         }
 
         // Student Access Validation
@@ -132,31 +128,49 @@ public class LectureServiceImpl implements LectureService {
                 .findFirstByStudentAndCourseAndStatusOrderByExpiryDateDesc(user, course, EnrollmentStatus.ACTIVE);
 
         if (activeEnrollment.isEmpty()) {
-            return LectureAccessResponseDTO.builder()
-                    .hasAccess(false)
-                    .reason("No active enrollment found for this course. Please purchase a plan.")
-                    .lectureUrl(null)
-                    .recordingUrl(null)
-                    .build();
+            return buildLectureAccessResponse(false, "No active enrollment found for this course. Please purchase a plan.", lecture, course);
         }
 
         Enrollment enrollment = activeEnrollment.get();
         LocalDate today = LocalDate.now();
 
         if (enrollment.getExpiryDate() != null && today.isAfter(enrollment.getExpiryDate())) {
-            return LectureAccessResponseDTO.builder()
-                    .hasAccess(false)
-                    .reason("Your course access has expired. Please renew your plan.")
-                    .lectureUrl(null)
-                    .recordingUrl(null)
-                    .build();
+            return buildLectureAccessResponse(false, "Your course access has expired. Please renew your plan.", lecture, course);
         }
 
+        return buildLectureAccessResponse(true, "Access granted", lecture, course);
+    }
+
+    private LectureAccessResponseDTO buildLectureAccessResponse(boolean hasAccess, String reason, Lecture lecture, Course course) {
+        Faculty faculty = (lecture != null && lecture.getFaculty() != null)
+                ? lecture.getFaculty()
+                : (course != null ? course.getFaculty() : null);
+
+        String facultyName = faculty != null && faculty.getUser() != null ? faculty.getUser().getFullName() : null;
+        String facultyEmail = faculty != null && faculty.getUser() != null ? faculty.getUser().getEmail() : null;
+        String facultyCode = faculty != null ? faculty.getFacultyCode() : null;
+        String facultyDepartment = faculty != null ? faculty.getDepartment() : null;
+
         return LectureAccessResponseDTO.builder()
-                .hasAccess(true)
-                .reason("Access granted")
-                .lectureUrl(lecture.getLectureUrl())
-                .recordingUrl(lecture.getRecordingUrl())
+                .hasAccess(hasAccess)
+                .reason(reason)
+                .lectureId(lecture != null ? (lecture.getLectureCode() != null ? lecture.getLectureCode() : String.valueOf(lecture.getId())) : null)
+                .title(lecture != null ? lecture.getTitle() : null)
+                .description(lecture != null ? lecture.getDescription() : null)
+                .lectureDate(lecture != null ? lecture.getLectureDate() : null)
+                .startTime(lecture != null ? lecture.getStartTime() : null)
+                .endTime(lecture != null ? lecture.getEndTime() : null)
+                .lectureUrl(hasAccess && lecture != null ? lecture.getLectureUrl() : null)
+                .meetingLink(hasAccess && lecture != null ? lecture.getLectureUrl() : null)
+                .recordingUrl(hasAccess && lecture != null ? lecture.getRecordingUrl() : null)
+                .isDownloadable(lecture != null ? lecture.getIsDownloadable() : false)
+                .courseId(course != null ? course.getId() : null)
+                .courseCode(course != null ? course.getCourseCode() : null)
+                .courseName(course != null ? course.getName() : null)
+                .facultyName(facultyName)
+                .facultyCode(facultyCode)
+                .facultyEmail(facultyEmail)
+                .facultyDepartment(facultyDepartment)
                 .build();
     }
 

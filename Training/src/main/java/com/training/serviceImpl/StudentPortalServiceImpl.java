@@ -141,6 +141,7 @@ public class StudentPortalServiceImpl implements StudentPortalService {
                     .startTime(lec.getStartTime())
                     .endTime(lec.getEndTime())
                     .lectureUrl(lec.getLectureUrl())
+                    .meetingLink(lec.getLectureUrl())
                     .recordingUrl(lec.getRecordingUrl())
                     .isDownloadable(lec.getIsDownloadable())
                     .courseId(course.getId())
