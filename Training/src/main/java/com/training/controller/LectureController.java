@@ -21,8 +21,10 @@ public class LectureController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<LectureResponseDTO>> createLecture(
-            @Valid @RequestBody CreateLectureDTO dto) {
-        LectureResponseDTO data = lectureService.createLecture(dto);
+            @Valid @RequestBody CreateLectureDTO dto,
+            Authentication authentication) {
+        String userEmail = authentication != null ? authentication.getName() : null;
+        LectureResponseDTO data = lectureService.createLecture(dto, userEmail);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(

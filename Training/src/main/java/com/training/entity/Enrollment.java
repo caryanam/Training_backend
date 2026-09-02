@@ -35,6 +35,10 @@ public class Enrollment {
     @JoinColumn(name = "plan_id")
     private CoursePlan plan;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "enrolled_by_user_id")
+    private User enrolledBy;
+
     private LocalDate startDate;
 
     private LocalDate expiryDate;

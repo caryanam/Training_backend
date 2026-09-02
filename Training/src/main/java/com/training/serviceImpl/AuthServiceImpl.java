@@ -64,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
             cleanPhone = cleanPhone.substring(2);
         }
         if (!cleanPhone.matches("^[6-9]\\d{9}$")) {
-            throw new BadRequestException("Phone number must contain a valid Indian 10-digit mobile number");
+            throw new BadRequestException("Mobile number must be a valid 10-digit number starting with 6, 7, 8, or 9");
         }
 
         String courseVal = (dto.getInterestedCourse() != null && !dto.getInterestedCourse().trim().isEmpty())

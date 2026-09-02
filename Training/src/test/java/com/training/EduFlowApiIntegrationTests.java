@@ -302,4 +302,99 @@ public class EduFlowApiIntegrationTests {
                 .andExpect(jsonPath("$.data.hasAccess", is(true)))
                 .andExpect(jsonPath("$.data.lectureUrl", notNullValue()));
     }
+
+    @Test
+    @Order(13)
+    void test13_ActiveEnrolledStudentGetsMeeting() throws Exception {
+        mockMvc.perform(get("/api/v1/student/meetings")
+                        .header("Authorization", "Bearer " + studentToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(1))))
+                .andExpect(jsonPath("$.data[0].meetingLink", containsString("meet.google.com")));
+    }
+
+    @Test
+    @Order(14)
+    void test14_ActiveEnrolledStudentGetsLectures() throws Exception {
+        mockMvc.perform(get("/api/v1/student/lectures")
+                        .header("Authorization", "Bearer " + studentToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(1))))
+                .andExpect(jsonPath("$.data[0].lectureUrl", notNullValue()));
+    }
+
+    @Test
+    @Order(15)
+    void test15_NonEnrolledStudentCannotSeeMeetingsOrLectures() throws Exception {
+        // Register a new independent student who is NOT enrolled
+        RegisterStudentDTO nonEnrolledDTO = RegisterStudentDTO.builder()
+                .fullName("Unenrolled Tester")
+                .email("unenrolled.tester@example.com")
+                .phone("9123456780")
+                .password("Password@123")
+                .interestedCourse("Cyber Security")
+                .education("B.Tech")
+                .city("Mumbai")
+                .build();
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nonEnrolledDTO)))
+                .andExpect(status().isCreated());
+
+        LoginRequestDTO loginDTO = LoginRequestDTO.builder()
+                .email("unenrolled.tester@example.com")
+                .password("Password@123")
+                .build();
+
+        MvcResult loginRes = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginDTO)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Map loginMap = objectMapper.readValue(loginRes.getResponse().getContentAsString(), Map.class);
+        String unenrolledToken = (String) ((Map) loginMap.get("data")).get("token");
+
+        // Should return 0 meetings
+        mockMvc.perform(get("/api/v1/student/meetings")
+                        .header("Authorization", "Bearer " + unenrolledToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data", hasSize(0)));
+
+        // Should return 0 lectures
+        mockMvc.perform(get("/api/v1/student/lectures")
+                        .header("Authorization", "Bearer " + unenrolledToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.data", hasSize(0)));
+    }
+
+    @Test
+    @Order(16)
+    void test16_NonEnrolledStudentDirectLectureAccessReturns403() throws Exception {
+        LoginRequestDTO loginDTO = LoginRequestDTO.builder()
+                .email("unenrolled.tester@example.com")
+                .password("Password@123")
+                .build();
+
+        MvcResult loginRes = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginDTO)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Map loginMap = objectMapper.readValue(loginRes.getResponse().getContentAsString(), Map.class);
+        String unenrolledToken = (String) ((Map) loginMap.get("data")).get("token");
+
+        // Direct meeting/lecture access must return 403 Forbidden
+        mockMvc.perform(get("/api/v1/lectures/" + createdLectureId + "/access")
+                        .header("Authorization", "Bearer " + unenrolledToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success", is(false)))
+                .andExpect(jsonPath("$.data.hasAccess", is(false)));
+    }
 }

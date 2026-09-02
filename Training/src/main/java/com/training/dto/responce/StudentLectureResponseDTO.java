@@ -1,6 +1,7 @@
 package com.training.dto.responce;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,9 +14,9 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LectureResponseDTO {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class StudentLectureResponseDTO {
     private String lectureId;
-    private String courseId;
     private String title;
     private String description;
 
@@ -31,4 +32,7 @@ public class LectureResponseDTO {
     private String lectureUrl;
     private String recordingUrl;
     private Boolean isDownloadable;
+    private Long courseId;
+    private String courseCode;
+    private String courseName;
 }

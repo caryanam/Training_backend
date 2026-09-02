@@ -7,9 +7,11 @@ import com.training.entity.*;
 import com.training.enums.EnrollmentStatus;
 import com.training.enums.Role;
 import com.training.exception.ResourceNotFoundException;
+import com.training.exception.UnauthorizedException;
 import com.training.repo.*;
 import com.training.service.LectureService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LectureServiceImpl implements LectureService {
 
     private final LectureRepository lectureRepository;
@@ -29,12 +32,44 @@ public class LectureServiceImpl implements LectureService {
     @Override
     @Transactional
     public LectureResponseDTO createLecture(CreateLectureDTO dto) {
+        return createLecture(dto, null);
+    }
+
+    @Override
+    @Transactional
+    public LectureResponseDTO createLecture(CreateLectureDTO dto, String authenticatedEmail) {
         Course course = findCourseByIdOrCode(dto.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + dto.getCourseId()));
 
         Faculty faculty = null;
-        if (dto.getFacultyId() != null && !dto.getFacultyId().isEmpty()) {
+
+        // Verify authenticated user's role and course ownership if faculty
+        if (authenticatedEmail != null) {
+            Optional<User> userOpt = userRepository.findByEmail(authenticatedEmail);
+            if (userOpt.isPresent()) {
+                User authUser = userOpt.get();
+                if (authUser.getRole() == Role.FACULTY) {
+                    faculty = facultyRepository.findByUser(authUser).orElse(null);
+
+                    // Validate faculty assignment on the course
+                    if (faculty != null && course.getFaculty() != null && !course.getFaculty().getId().equals(faculty.getId())) {
+                        throw new UnauthorizedException("You are not assigned to manage this course: " + course.getName());
+                    }
+                    // Auto-assign faculty if unassigned
+                    if (course.getFaculty() == null && faculty != null) {
+                        course.setFaculty(faculty);
+                        courseRepository.save(course);
+                    }
+                }
+            }
+        }
+
+        if (faculty == null && dto.getFacultyId() != null && !dto.getFacultyId().isEmpty()) {
             faculty = findFacultyByIdOrCode(dto.getFacultyId()).orElse(null);
+        }
+
+        if (faculty == null && course.getFaculty() != null) {
+            faculty = course.getFaculty();
         }
 
         Lecture lecture = Lecture.builder()
@@ -43,8 +78,8 @@ public class LectureServiceImpl implements LectureService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .lectureDate(dto.getLectureDate())
-                .startTime(dto.getStartTime())
-                .endTime(dto.getEndTime())
+                .startTime(dto.getParsedStartTime())
+                .endTime(dto.getParsedEndTime())
                 .lectureUrl(dto.getLectureUrl())
                 .recordingUrl(dto.getRecordingUrl())
                 .isDownloadable(dto.getIsDownloadable())

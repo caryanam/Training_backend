@@ -15,4 +15,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByTransactionId(String transactionId);
     List<Payment> findByStudent(User student);
     List<Payment> findByStudentAndCourseAndPaymentStatus(User student, Course course, PaymentStatus paymentStatus);
+    List<Payment> findByStudentIn(List<User> students);
 }

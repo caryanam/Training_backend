@@ -275,6 +275,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     .student(studentUser)
                     .course(course)
                     .plan(plan)
+                    .enrolledBy(executorUser)
                     .startDate(startDate)
                     .expiryDate(expiryDate)
                     .status(EnrollmentStatus.ACTIVE)
@@ -355,7 +356,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     private String validateAndGetPhone(String phone) {
         if (phone == null || phone.trim().isEmpty()) {
-            return "9876543210";
+            throw new BadRequestException("Phone number is required");
         }
         String cleanPhone = phone.trim().replace(" ", "").replace("-", "");
         if (cleanPhone.startsWith("+91")) {
@@ -364,7 +365,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             cleanPhone = cleanPhone.substring(2);
         }
         if (!cleanPhone.matches("^[6-9]\\d{9}$")) {
-            return "9876543210";
+            throw new BadRequestException("Mobile number must be a valid 10-digit number starting with 6, 7, 8, or 9");
         }
         return cleanPhone;
     }
@@ -438,3 +439,4 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
 }
+

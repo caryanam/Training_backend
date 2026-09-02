@@ -444,6 +444,60 @@ public class StudentOnboardingIntegrationTests {
                 .andExpect(jsonPath("$.data.lectureUrl", is("https://meet.google.com/java-adv")));
     }
 
+    @Test
+    @DisplayName("Test Mobile Number Validation: Accept only 10-digits starting with 6-9, reject invalid numbers")
+    void testMobileNumberValidation() throws Exception {
+        // 1. Invalid: Starting with 5 (not in 6-9)
+        RegisterStudentDTO invalidPrefix = RegisterStudentDTO.builder()
+                .fullName("Test User")
+                .email("test.prefix@example.com")
+                .phone("5876543210")
+                .password("Password@123")
+                .build();
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidPrefix)))
+                .andExpect(status().isBadRequest());
+
+        // 2. Invalid: Less than 10 digits
+        RegisterStudentDTO shortNumber = RegisterStudentDTO.builder()
+                .fullName("Test User")
+                .email("test.short@example.com")
+                .phone("9876543")
+                .password("Password@123")
+                .build();
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(shortNumber)))
+                .andExpect(status().isBadRequest());
+
+        // 3. Valid: 10 digits starting with 7
+        RegisterStudentDTO validNum = RegisterStudentDTO.builder()
+                .fullName("Test User Valid")
+                .email("test.valid7@example.com")
+                .phone("7890123456")
+                .password("Password@123")
+                .build();
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validNum)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.phone", is("7890123456")));
+
+        // 4. Valid: 10 digits starting with 6
+        RegisterStudentDTO validNum6 = RegisterStudentDTO.builder()
+                .fullName("Test User Valid 6")
+                .email("test.valid6@example.com")
+                .phone("6890123456")
+                .password("Password@123")
+                .build();
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validNum6)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.phone", is("6890123456")));
+    }
+
     private String extractDataField(MvcResult result, String field) throws Exception {
         Map map = objectMapper.readValue(result.getResponse().getContentAsString(), Map.class);
         Map data = (Map) map.get("data");

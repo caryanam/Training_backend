@@ -53,22 +53,27 @@ public class RateLimitingFilter implements Filter {
         boolean allowed = true;
 
         if (path.contains("/auth/login")) {
-            Bucket bucket = loginBuckets.computeIfAbsent(ip, k -> createNewBucket(10, 10, Duration.ofMinutes(1)));
+            Bucket bucket = loginBuckets.computeIfAbsent(ip, k -> createNewBucket(100, 100, Duration.ofMinutes(1)));
             allowed = bucket.tryConsume(1);
         } else if (path.contains("/auth/register") || path.contains("/auth/student/register")) {
-            Bucket bucket = registerBuckets.computeIfAbsent(ip, k -> createNewBucket(5, 5, Duration.ofMinutes(1)));
+            Bucket bucket = registerBuckets.computeIfAbsent(ip, k -> createNewBucket(50, 50, Duration.ofMinutes(1)));
             allowed = bucket.tryConsume(1);
         } else if (path.contains("/admin/")) {
             String authHeader = request.getHeader("Authorization");
             String key = (authHeader != null && !authHeader.isEmpty()) ? authHeader : ip;
-            Bucket bucket = adminBuckets.computeIfAbsent(key, k -> createNewBucket(60, 60, Duration.ofMinutes(1)));
+            Bucket bucket = adminBuckets.computeIfAbsent(key, k -> createNewBucket(120, 120, Duration.ofMinutes(1)));
             allowed = bucket.tryConsume(1);
         } else {
-            Bucket bucket = globalBuckets.computeIfAbsent(ip, k -> createNewBucket(120, 120, Duration.ofMinutes(1)));
+            Bucket bucket = globalBuckets.computeIfAbsent(ip, k -> createNewBucket(200, 200, Duration.ofMinutes(1)));
             allowed = bucket.tryConsume(1);
         }
 
         if (!allowed) {
+            String origin = request.getHeader("Origin");
+            if (origin != null) {
+                response.setHeader("Access-Control-Allow-Origin", origin);
+                response.setHeader("Access-Control-Allow-Credentials", "true");
+            }
             response.setStatus(429); // HTTP 429 Too Many Requests
             response.setContentType("application/json");
             response.getWriter().write("{\"success\":false,\"message\":\"Too Many Requests - Rate limit exceeded. Please try again later.\",\"status\":429}");

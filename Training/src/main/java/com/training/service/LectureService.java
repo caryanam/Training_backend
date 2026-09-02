@@ -6,5 +6,6 @@ import com.training.dto.responce.LectureResponseDTO;
 
 public interface LectureService {
     LectureResponseDTO createLecture(CreateLectureDTO dto);
+    LectureResponseDTO createLecture(CreateLectureDTO dto, String authenticatedEmail);
     LectureAccessResponseDTO getLectureAccess(String lectureId, String userEmail);
 }
