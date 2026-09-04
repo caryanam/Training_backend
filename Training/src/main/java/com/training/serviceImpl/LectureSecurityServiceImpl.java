@@ -222,7 +222,7 @@ public class LectureSecurityServiceImpl implements LectureSecurityService {
     private SecurityEventSeverity resolveSeverity(SecurityEventType eventType) {
         return switch (eventType) {
             case SCREEN_RECORDING_ATTEMPT, SCREENSHOT_ATTEMPT, SCREEN_SHARE_STARTED, MULTIPLE_SESSION_DETECTED, SESSION_TERMINATED -> SecurityEventSeverity.HIGH;
-            case SCREEN_SHARE_INTERRUPTED, SUSPICIOUS_CAPTURE_ACTIVITY, TAB_HIDDEN, WINDOW_BLUR, FULLSCREEN_EXITED, SUSPICIOUS_ACTIVITY -> SecurityEventSeverity.MEDIUM;
+            case SCREEN_SHARE_INTERRUPTED, SUSPICIOUS_CAPTURE_ACTIVITY, PROTECTION_ACTIVATED, TAB_HIDDEN, WINDOW_BLUR, FULLSCREEN_EXITED, SUSPICIOUS_ACTIVITY -> SecurityEventSeverity.MEDIUM;
             case SCREEN_SHARE_STOPPED, TAB_VISIBLE, WINDOW_FOCUS -> SecurityEventSeverity.LOW;
         };
     }
@@ -233,7 +233,8 @@ public class LectureSecurityServiceImpl implements LectureSecurityService {
                 type == SecurityEventType.WINDOW_BLUR ||
                 type == SecurityEventType.WINDOW_FOCUS ||
                 type == SecurityEventType.SCREEN_RECORDING_ATTEMPT ||
-                type == SecurityEventType.SCREENSHOT_ATTEMPT;
+                type == SecurityEventType.SCREENSHOT_ATTEMPT ||
+                type == SecurityEventType.PROTECTION_ACTIVATED;
     }
 
     private Optional<Lecture> findLectureByIdOrCode(String key) {
