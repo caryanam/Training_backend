@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -171,6 +172,58 @@ public class LectureServiceImpl implements LectureService {
                 .facultyCode(facultyCode)
                 .facultyEmail(facultyEmail)
                 .facultyDepartment(facultyDepartment)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LectureResponseDTO> getFacultyLectures(String facultyEmail) {
+        if (facultyEmail == null || facultyEmail.isBlank()) {
+            return lectureRepository.findAll().stream().map(this::mapToLectureDTO).toList();
+        }
+
+        User user = userRepository.findByEmail(facultyEmail).orElse(null);
+        if (user == null) {
+            return lectureRepository.findAll().stream().map(this::mapToLectureDTO).toList();
+        }
+
+        List<Lecture> lectures;
+        if (user.getRole() == Role.ADMIN) {
+            lectures = lectureRepository.findAll();
+        } else if (user.getRole() == Role.FACULTY) {
+            Optional<Faculty> facultyOpt = facultyRepository.findByUser(user);
+            if (facultyOpt.isPresent()) {
+                Faculty faculty = facultyOpt.get();
+                List<Course> courses = courseRepository.findByFaculty(faculty);
+                if (!courses.isEmpty()) {
+                    lectures = lectureRepository.findByCourseIn(courses);
+                } else {
+                    lectures = lectureRepository.findAll();
+                }
+            } else {
+                lectures = lectureRepository.findAll();
+            }
+        } else {
+            lectures = lectureRepository.findAll();
+        }
+
+        return lectures.stream().map(this::mapToLectureDTO).toList();
+    }
+
+    private LectureResponseDTO mapToLectureDTO(Lecture l) {
+        Course course = l.getCourse();
+        return LectureResponseDTO.builder()
+                .lectureId(l.getLectureCode() != null ? l.getLectureCode() : "lecture-" + l.getId())
+                .courseId(course != null ? (course.getCourseCode() != null ? course.getCourseCode() : "course-" + course.getId()) : null)
+                .courseName(course != null ? course.getName() : null)
+                .title(l.getTitle())
+                .description(l.getDescription())
+                .lectureDate(l.getLectureDate())
+                .startTime(l.getStartTime())
+                .endTime(l.getEndTime())
+                .lectureUrl(l.getLectureUrl())
+                .recordingUrl(l.getRecordingUrl())
+                .isDownloadable(l.getIsDownloadable())
                 .build();
     }
 

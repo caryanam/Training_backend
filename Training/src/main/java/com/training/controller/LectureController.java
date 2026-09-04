@@ -9,8 +9,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/lectures")
@@ -19,7 +22,24 @@ public class LectureController {
 
     private final LectureService lectureService;
 
+    /**
+     * GET /api/v1/lectures
+     * Returns lectures for the authenticated faculty member or admin.
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_FACULTY', 'ROLE_ADMIN')")
+    public ResponseEntity<ApiResponse<List<LectureResponseDTO>>> getFacultyLectures(Authentication authentication) {
+        String userEmail = authentication != null ? authentication.getName() : null;
+        List<LectureResponseDTO> data = lectureService.getFacultyLectures(userEmail);
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "Faculty lectures retrieved successfully.",
+                data
+        ));
+    }
+
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_FACULTY', 'ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<LectureResponseDTO>> createLecture(
             @Valid @RequestBody CreateLectureDTO dto,
             Authentication authentication) {

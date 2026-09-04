@@ -1,0 +1,14 @@
+package com.training.enums;
+
+public enum SecurityEventType {
+    SCREEN_SHARE_STARTED,
+    SCREEN_SHARE_STOPPED,
+    TAB_HIDDEN,
+    TAB_VISIBLE,
+    WINDOW_BLUR,
+    WINDOW_FOCUS,
+    FULLSCREEN_EXITED,
+    MULTIPLE_SESSION_DETECTED,
+    SESSION_TERMINATED,
+    SUSPICIOUS_ACTIVITY
+}
