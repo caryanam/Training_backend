@@ -197,16 +197,16 @@ public class LectureSecurityServiceImpl implements LectureSecurityService {
                     .violationCount((int) highSeverityCount)
                     .isSuspended(false)
                     .warningLevel("STRONG_WARNING")
-                    .message("Strong Security Warning: Unauthorized screen sharing is not allowed. A 3rd violation will terminate your live lecture session.")
-                    .actionRequired("Stop screen sharing immediately.")
+                    .message("Strong Security Warning: Screen recording, screenshots, and unauthorized capture are strictly prohibited. A 3rd violation will terminate your live lecture session.")
+                    .actionRequired("Comply with lecture security.")
                     .build();
         } else if (highSeverityCount == 1) {
             return SecurityPolicyStatusDTO.builder()
                     .violationCount((int) highSeverityCount)
                     .isSuspended(false)
                     .warningLevel("WARNING")
-                    .message("Security Warning: Screen sharing is not allowed during this lecture. This activity has been recorded and the faculty notified.")
-                    .actionRequired("Stop screen sharing.")
+                    .message("Security Warning: Screen recording or screenshot attempt detected. This activity has been logged and the faculty notified.")
+                    .actionRequired("Comply with lecture security.")
                     .build();
         }
 
@@ -221,8 +221,8 @@ public class LectureSecurityServiceImpl implements LectureSecurityService {
 
     private SecurityEventSeverity resolveSeverity(SecurityEventType eventType) {
         return switch (eventType) {
-            case SCREEN_SHARE_STARTED, MULTIPLE_SESSION_DETECTED, SESSION_TERMINATED -> SecurityEventSeverity.HIGH;
-            case TAB_HIDDEN, WINDOW_BLUR, FULLSCREEN_EXITED, SUSPICIOUS_ACTIVITY -> SecurityEventSeverity.MEDIUM;
+            case SCREEN_RECORDING_ATTEMPT, SCREENSHOT_ATTEMPT, SCREEN_SHARE_STARTED, MULTIPLE_SESSION_DETECTED, SESSION_TERMINATED -> SecurityEventSeverity.HIGH;
+            case SCREEN_SHARE_INTERRUPTED, SUSPICIOUS_CAPTURE_ACTIVITY, TAB_HIDDEN, WINDOW_BLUR, FULLSCREEN_EXITED, SUSPICIOUS_ACTIVITY -> SecurityEventSeverity.MEDIUM;
             case SCREEN_SHARE_STOPPED, TAB_VISIBLE, WINDOW_FOCUS -> SecurityEventSeverity.LOW;
         };
     }
@@ -231,7 +231,9 @@ public class LectureSecurityServiceImpl implements LectureSecurityService {
         return type == SecurityEventType.TAB_HIDDEN ||
                 type == SecurityEventType.TAB_VISIBLE ||
                 type == SecurityEventType.WINDOW_BLUR ||
-                type == SecurityEventType.WINDOW_FOCUS;
+                type == SecurityEventType.WINDOW_FOCUS ||
+                type == SecurityEventType.SCREEN_RECORDING_ATTEMPT ||
+                type == SecurityEventType.SCREENSHOT_ATTEMPT;
     }
 
     private Optional<Lecture> findLectureByIdOrCode(String key) {

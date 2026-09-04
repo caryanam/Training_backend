@@ -1,48 +1,35 @@
 package com.training.service;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
 public class LiveKitTokenService {
 
-    @Value("${livekit.url:wss://livekit.internal}")
+    @Value("${livekit.url:ws://localhost:7880}")
     private String livekitUrl;
 
     @Value("${livekit.api-key:devkey}")
     private String apiKey;
 
-    @Value("${livekit.api-secret:secret_livekit_key_super_secure_2026_prod_edition}")
+    @Value("${livekit.api-secret:secret}")
     private String apiSecret;
 
     @Value("${livekit.token-ttl:3600}")
     private long tokenTtlSeconds;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public String getLivekitUrl() {
         return livekitUrl;
-    }
-
-    private Key getSigningKey() {
-        byte[] keyBytes = apiSecret.getBytes(StandardCharsets.UTF_8);
-        // Ensure key is at least 256 bits (32 bytes)
-        if (keyBytes.length < 32) {
-            byte[] padded = new byte[32];
-            System.arraycopy(keyBytes, 0, padded, 0, keyBytes.length);
-            return Keys.hmacShaKeyFor(padded);
-        }
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     /**
@@ -77,27 +64,45 @@ public class LiveKitTokenService {
     }
 
     private String buildLiveKitJwt(String roomName, String participantIdentity, String participantName, String metadata, Map<String, Object> videoGrant) {
-        long nowMillis = System.currentTimeMillis();
-        Date now = new Date(nowMillis);
-        Date expiration = new Date(nowMillis + (tokenTtlSeconds * 1000));
+        long nowSeconds = System.currentTimeMillis() / 1000;
+        long expSeconds = nowSeconds + tokenTtlSeconds;
 
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("video", videoGrant);
-        if (metadata != null && !metadata.isBlank()) {
-            claims.put("metadata", metadata);
-        }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("iss", apiKey);
+        payload.put("sub", participantIdentity);
+        payload.put("iat", nowSeconds);
+        payload.put("nbf", nowSeconds);
+        payload.put("exp", expSeconds);
         if (participantName != null && !participantName.isBlank()) {
-            claims.put("name", participantName);
+            payload.put("name", participantName);
         }
+        if (metadata != null && !metadata.isBlank()) {
+            payload.put("metadata", metadata);
+        }
+        payload.put("video", videoGrant);
 
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(participantIdentity)
-                .setIssuer(apiKey)
-                .setIssuedAt(now)
-                .setNotBefore(now)
-                .setExpiration(expiration)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
+        try {
+            Map<String, Object> header = new LinkedHashMap<>();
+            header.put("alg", "HS256");
+            header.put("typ", "JWT");
+
+            String headerJson = objectMapper.writeValueAsString(header);
+            String payloadJson = objectMapper.writeValueAsString(payload);
+
+            String headerB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+            String payloadB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+
+            String dataToSign = headerB64 + "." + payloadB64;
+
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(apiSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] signatureBytes = mac.doFinal(dataToSign.getBytes(StandardCharsets.US_ASCII));
+            String signatureB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(signatureBytes);
+
+            return dataToSign + "." + signatureB64;
+        } catch (Exception e) {
+            log.error("Failed to generate LiveKit JWT token: {}", e.getMessage(), e);
+            throw new RuntimeException("Could not generate LiveKit access token: " + e.getMessage(), e);
+        }
     }
 }

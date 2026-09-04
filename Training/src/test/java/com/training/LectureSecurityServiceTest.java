@@ -189,4 +189,57 @@ public class LectureSecurityServiceTest {
         // Ensure no duplicate save occurred
         verify(securityEventRepository, never()).save(any(LectureSecurityEvent.class));
     }
+    @Test
+    @DisplayName("Should record SCREEN_RECORDING_ATTEMPT event and return warning policy")
+    void testRecordScreenRecordingAttempt() {
+        ReportSecurityEventDTO dto = ReportSecurityEventDTO.builder()
+                .lectureId("lecture-50")
+                .eventType(SecurityEventType.SCREEN_RECORDING_ATTEMPT)
+                .metadata("key:Ctrl+Alt+R;platform:Win32")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        when(userRepository.findByEmail("student@test.com")).thenReturn(Optional.of(studentUser));
+        when(lectureRepository.findByLectureCode("lecture-50")).thenReturn(Optional.of(lecture));
+        when(enrollmentRepository.findFirstByStudentAndCourseAndStatusOrderByExpiryDateDesc(studentUser, course, EnrollmentStatus.ACTIVE))
+                .thenReturn(Optional.of(activeEnrollment));
+        when(studentRepository.findByUser(studentUser)).thenReturn(Optional.empty());
+        when(securityEventRepository.countByLectureAndStudentAndSeverityIn(eq(lecture), eq(studentUser), anyList()))
+                .thenReturn(1L);
+
+        SecurityPolicyStatusDTO status = securityService.recordSecurityEvent(dto, "student@test.com");
+
+        assertNotNull(status);
+        assertEquals(1, status.getViolationCount());
+        assertFalse(status.isSuspended());
+        assertEquals("WARNING", status.getWarningLevel());
+        verify(securityEventRepository, times(1)).save(any(LectureSecurityEvent.class));
+    }
+
+    @Test
+    @DisplayName("Should record SCREENSHOT_ATTEMPT event and return warning policy")
+    void testRecordScreenshotAttempt() {
+        ReportSecurityEventDTO dto = ReportSecurityEventDTO.builder()
+                .lectureId("lecture-50")
+                .eventType(SecurityEventType.SCREENSHOT_ATTEMPT)
+                .metadata("key:PrintScreen;platform:Win32")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        when(userRepository.findByEmail("student@test.com")).thenReturn(Optional.of(studentUser));
+        when(lectureRepository.findByLectureCode("lecture-50")).thenReturn(Optional.of(lecture));
+        when(enrollmentRepository.findFirstByStudentAndCourseAndStatusOrderByExpiryDateDesc(studentUser, course, EnrollmentStatus.ACTIVE))
+                .thenReturn(Optional.of(activeEnrollment));
+        when(studentRepository.findByUser(studentUser)).thenReturn(Optional.empty());
+        when(securityEventRepository.countByLectureAndStudentAndSeverityIn(eq(lecture), eq(studentUser), anyList()))
+                .thenReturn(2L);
+
+        SecurityPolicyStatusDTO status = securityService.recordSecurityEvent(dto, "student@test.com");
+
+        assertNotNull(status);
+        assertEquals(2, status.getViolationCount());
+        assertFalse(status.isSuspended());
+        assertEquals("STRONG_WARNING", status.getWarningLevel());
+        verify(securityEventRepository, times(1)).save(any(LectureSecurityEvent.class));
+    }
 }

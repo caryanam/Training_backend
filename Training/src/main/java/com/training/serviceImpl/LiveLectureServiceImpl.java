@@ -85,7 +85,7 @@ public class LiveLectureServiceImpl implements LiveLectureService {
             session = existingSessionOpt.get();
             log.info("Faculty {} re-joining active live session {} for lecture {}", facultyEmail, session.getId(), lecture.getTitle());
         } else {
-            String roomName = "room-lecture-" + lecture.getId();
+            String roomName = "room-lecture-" + lecture.getId() + "-" + System.currentTimeMillis();
             session = LiveLectureSession.builder()
                     .lecture(lecture)
                     .status(LiveSessionStatus.LIVE)
@@ -188,10 +188,8 @@ public class LiveLectureServiceImpl implements LiveLectureService {
                 .build();
         participantRepository.save(participant);
 
-        // Update active participant count
+        // Count active participants dynamically (avoid updating parent LiveLectureSession row to prevent MySQL deadlock)
         long activeCount = participantRepository.countBySessionAndStatus(session, ParticipantStatus.ACTIVE);
-        session.setParticipantCount((int) activeCount);
-        sessionRepository.save(session);
 
         // Generate LiveKit Student Token (Subscribe-Only, Publish = false)
         String identity = "stu_" + user.getId() + "_" + user.getEmail();
@@ -302,10 +300,6 @@ public class LiveLectureServiceImpl implements LiveLectureService {
             participant.setLeftAt(LocalDateTime.now());
             participantRepository.save(participant);
 
-            long activeCount = participantRepository.countBySessionAndStatus(session, ParticipantStatus.ACTIVE);
-            session.setParticipantCount((int) activeCount);
-            sessionRepository.save(session);
-
             logLiveEvent(session, "STUDENT_LEFT", user.getEmail(), user.getRole().name(),
                     "Student " + user.getFullName() + " left room " + session.getRoomName());
         }
@@ -376,6 +370,8 @@ public class LiveLectureServiceImpl implements LiveLectureService {
                 ? faculty.getUser().getFullName()
                 : "Faculty Instructor";
 
+        long activeCount = isLive ? participantRepository.countBySessionAndStatus(session, ParticipantStatus.ACTIVE) : 0;
+
         return LiveLectureStatusResponseDTO.builder()
                 .isLive(isLive)
                 .sessionId(session.getId())
@@ -384,7 +380,7 @@ public class LiveLectureServiceImpl implements LiveLectureService {
                 .courseName(lecture.getCourse() != null ? lecture.getCourse().getName() : "Curriculum Track")
                 .roomName(session.getRoomName())
                 .facultyName(facultyName)
-                .participantCount(session.getParticipantCount() != null ? session.getParticipantCount() : 0)
+                .participantCount((int) activeCount)
                 .status(session.getStatus().name())
                 .startedAt(session.getStartedAt())
                 .endedAt(session.getEndedAt())
