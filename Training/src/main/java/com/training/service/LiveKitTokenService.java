@@ -14,13 +14,13 @@ import java.util.*;
 @Slf4j
 public class LiveKitTokenService {
 
-    @Value("${livekit.url:ws://localhost:7880}")
+    @Value("${livekit.url:ws://localhost:8094}")
     private String livekitUrl;
 
     @Value("${livekit.api-key:devkey}")
     private String apiKey;
 
-    @Value("${livekit.api-secret:secret}")
+    @Value("${livekit.api-secret:secret_32_chars_livekit_key_for_training_system_01}")
     private String apiSecret;
 
     @Value("${livekit.token-ttl:3600}")

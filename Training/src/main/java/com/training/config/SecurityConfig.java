@@ -96,7 +96,7 @@ public class SecurityConfig {
                 .toList();
 
         if (origins.isEmpty()) {
-            origins = List.of("http://localhost:5173", "http://localhost:3000", "http://localhost:5174", "http://127.0.0.1:5173");
+            origins = List.of("https://www.nexorainstitute.in","https://nexorainstitute.in","http://localhost:5173", "http://localhost:3000", "http://localhost:5174", "http://127.0.0.1:5173" ,"http://10.10.1.82:8081","http://10.10.1.82:5173", "https://10.10.1.82:5173", "https://localhost:5173","10.10.1.82:8094","https://10.10.1.82:8081");
         }
 
         configuration.setAllowedOrigins(origins);
