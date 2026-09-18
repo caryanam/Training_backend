@@ -51,7 +51,7 @@ public class EduFlowApiIntegrationTests {
     @Order(1)
     void test1_AdminLogin() throws Exception {
         LoginRequestDTO loginReq = LoginRequestDTO.builder()
-                .email("admin@gmail.com")
+                .identifier("admin@gmail.com")
                 .password("Admin@123")
                 .build();
 

@@ -51,7 +51,7 @@ public class StudentOnboardingIntegrationTests {
     void setUp() throws Exception {
         // 1. Admin Login
         LoginRequestDTO adminLogin = LoginRequestDTO.builder()
-                .email("admin@gmail.com")
+                .identifier("admin@gmail.com")
                 .password("Admin@123")
                 .build();
 
@@ -80,7 +80,7 @@ public class StudentOnboardingIntegrationTests {
 
         // Login as Faculty
         LoginRequestDTO facLogin = LoginRequestDTO.builder()
-                .email("ramesh.faculty@eduflow.com")
+                .identifier("ramesh.faculty@eduflow.com")
                 .password("Faculty@123")
                 .build();
         MvcResult facLoginRes = mockMvc.perform(post("/api/v1/auth/login")
@@ -105,7 +105,7 @@ public class StudentOnboardingIntegrationTests {
 
         // Login as Executor
         LoginRequestDTO exeLogin = LoginRequestDTO.builder()
-                .email("anita.executor@eduflow.com")
+                .identifier("anita.executor@eduflow.com")
                 .password("Executor@123")
                 .build();
         MvcResult exeLoginRes = mockMvc.perform(post("/api/v1/auth/login")
@@ -135,7 +135,7 @@ public class StudentOnboardingIntegrationTests {
 
         // Login as Student
         LoginRequestDTO stuLogin = LoginRequestDTO.builder()
-                .email("aarav.patel@test.com")
+                .identifier("aarav.patel@test.com")
                 .password("Student@123")
                 .build();
         MvcResult stuLoginRes = mockMvc.perform(post("/api/v1/auth/login")

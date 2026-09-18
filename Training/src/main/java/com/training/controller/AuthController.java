@@ -3,8 +3,9 @@ package com.training.controller;
 import com.training.dto.ApiResponse;
 import com.training.dto.request.LoginRequestDTO;
 import com.training.dto.request.RegisterStudentDTO;
+import com.training.dto.request.ResendOtpDTO;
+import com.training.dto.request.VerifyOtpDTO;
 import com.training.dto.responce.LoginResponseDTO;
-import com.training.dto.responce.RegisterStudentResponseDTO;
 import com.training.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,16 +20,40 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<RegisterStudentResponseDTO>> registerStudent(
+    @PostMapping({"/register", "/register/initiate"})
+    public ResponseEntity<ApiResponse<String>> registerStudent(
             @Valid @RequestBody RegisterStudentDTO dto) {
-        RegisterStudentResponseDTO data = authService.registerStudent(dto);
+        String message = authService.registerStudent(dto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(
                         true,
-                        "Registration successful. Admissions executor will contact you for a free demo.",
-                        data
+                        message,
+                        null
+                ));
+    }
+
+    @PostMapping("/register/verify-otp")
+    public ResponseEntity<ApiResponse<String>> verifyOtp(
+            @Valid @RequestBody VerifyOtpDTO dto) {
+        String message = authService.verifyRegistrationOtp(dto);
+        return ResponseEntity
+                .ok(new ApiResponse<>(
+                        true,
+                        message,
+                        null
+                ));
+    }
+
+    @PostMapping("/register/resend-otp")
+    public ResponseEntity<ApiResponse<String>> resendOtp(
+            @Valid @RequestBody ResendOtpDTO dto) {
+        String message = authService.resendRegistrationOtp(dto);
+        return ResponseEntity
+                .ok(new ApiResponse<>(
+                        true,
+                        message,
+                        null
                 ));
     }
 

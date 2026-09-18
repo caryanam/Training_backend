@@ -13,9 +13,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LoginRequestDTO {
 
-    @NotBlank(message = "email is required")
-    @Email(message = "Invalid email format")
-    private String email;
+    @NotBlank(message = "Identifier (email or mobile) is required")
+    @com.fasterxml.jackson.annotation.JsonAlias("email")
+    private String identifier;
 
     @NotBlank(message = "password is required")
     private String password;
